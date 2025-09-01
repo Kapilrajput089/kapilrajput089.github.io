@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>राधे राधे - जाप काउंटर</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset and Base Styles */
+        :root {
+            --primary-bg: #fff8f1;
+            --header-bg: linear-gradient(180deg, rgba(255, 237, 217, 0.8), rgba(255, 237, 217, 0));
+            --circle-bg: #ffffff;
+            --circle-shadow: 0 10px 25px rgba(229, 152, 102, 0.2);
+            --circle-active-shadow: 0 5px 15px rgba(229, 152, 102, 0.3);
+            --progress-bg: #fde8d7;
+            --progress-fill: #ff9933; /* Saffron */
+            --complete-bg: linear-gradient(145deg, #ffd700, #ffb347); /* Golden */
+            --text-color: #4a2c0f;
+            --button-bg: #ff9933;
+            --button-text: #ffffff;
+            --button-hover-bg: #e68a2e;
+            --disabled-bg: #f0f0f0;
+            --disabled-text: #a0a0a0;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', 'Tiro Devanagari Hindi', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
+        }
+
+        /* Header */
+        #headerTitle {
+            width: 100%;
+            text-align: center;
+            font-size: 1.75rem;
+            font-weight: bold;
+            padding: 20px 0;
+            letter-spacing: 4px;
+            color: var(--text-color);
+            position: sticky;
+            top: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        /* Main Content Area */
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        /* Counter Circle & Progress Ring */
+        #counterContainer {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        #counterCircle {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background-color: var(--circle-bg);
+            box-shadow: var(--circle-shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out, background-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        #counterCircle:active {
+            transform: scale(0.97);
+            box-shadow: var(--circle-active-shadow);
+        }
+
+        #countText {
+            font-size: 4rem;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+        
+        #progressRing {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            transform: rotate(-90deg);
+        }
+        #progressRing circle {
+            fill: transparent;
+            stroke-width: 12;
+            transition: stroke-dashoffset 0.3s ease-out;
+        }
+        #progressRing .bg {
+            stroke: var(--progress-bg);
+        }
+        #progressRing .progress {
+            stroke: var(--progress-fill);
+            stroke-linecap: round;
+        }
+
+        /* States for the counter */
+        #counterCircle.completed {
+            background: var(--complete-bg);
+            pointer-events: none;
+            cursor: default;
+        }
+        #counterCircle.completed #countText {
+            font-size: 2rem;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        #counterCircle.disabled {
+            cursor: not-allowed;
+        }
+
+        /* Settings Panel */
+        #settingsPanel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .settings-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        label {
+            font-size: 1rem;
+            margin-right: 5px;
+        }
+        
+        #targetSelect, #customTargetInput {
+            font-family: 'Inter', sans-serif;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--progress-bg);
+            background-color: #ffffff;
+            font-size: 1rem;
+        }
+
+        #customTargetWrap {
+            display: none;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+        }
+        .btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn:disabled {
+            background-color: var(--disabled-bg);
+            color: var(--disabled-text);
+            cursor: not-allowed;
+        }
+        
+        #muteToggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 5px;
+        }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        /* Responsive Styles */
+        @media (min-width: 768px) {
+            #headerTitle {
+                font-size: 2rem;
+            }
+            #counterCircle {
+                width: 320px;
+                height: 320px;
+            }
+            #countText {
+                font-size: 6rem;
+            }
+            #counterCircle.completed #countText {
+                font-size: 3rem;
+            }
+            #progressRing {
+                width: 370px;
+                height: 370px;
+            }
+            #progressRing circle {
+                stroke-width: 15;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header id="headerTitle">राधा राधा</header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Counter Circle -->
+        <div id="counterContainer">
+            <svg id="progressRing">
+                <circle class="bg" cx="50%" cy="50%" r="0"></circle>
+                <circle id="progressCircle" class="progress" cx="50%" cy="50%" r="0"></circle>
+            </svg>
+            <div id="counterCircle" role="button" aria-label="काउंट बढ़ाएं" tabindex="0">
+                <span id="countText">0</span>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel">
+            <div class="settings-row">
+                <label for="targetSelect">लक्ष्य:</label>
+                <select id="targetSelect">
+                    <option value="11">11</option>
+                    <option value="21">21</option>
+                    <option value="51">51</option>
+                    <option value="108" selected>108</option>
+                    <option value="216">216</option>
+                    <option value="1008">1008</option>
+                    <option value="custom">कस्टम</option>
+                </select>
+                <div id="customTargetWrap">
+                    <input type="number" id="customTargetInput" min="1" max="99999" placeholder="1-99999">
+                </div>
+            </div>
+            <div class="settings-row">
+                <button id="startBtn" class="btn">शुरू करें</button>
+                <button id="resetBtn" class="btn">रीसेट</button>
+                <button id="muteToggle" aria-label="म्यूट टॉगल करें">🔇</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>Created by kapilverma</footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const counterCircle = document.getElementById('counterCircle');
+            const countText = document.getElementById('countText');
+            const progressCircle = document.getElementById('progressCircle');
+            const targetSelect = document.getElementById('targetSelect');
+            const customTargetWrap = document.getElementById('customTargetWrap');
+            const customTargetInput = document.getElementById('customTargetInput');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const muteToggle = document.getElementById('muteToggle');
+
+            // State
+            let count = 0;
+            let target = 108;
+            let isStarted = false;
+            let isMuted = localStorage.getItem('isMuted') === 'true';
+            let audioCtx = null;
+            let progressRadius = 0;
+            let progressCircumference = 0;
+
+            // --- Core Functions ---
+            
+            const getTargetValue = () => {
+                const selectedValue = targetSelect.value;
+                if (selectedValue === 'custom') {
+                    const customValue = parseInt(customTargetInput.value, 10);
+                    return isNaN(customValue) || customValue < 1 ? 1 : customValue;
+                }
+                return parseInt(selectedValue, 10);
+            };
+
+            const updateUI = () => {
+                countText.textContent = count;
+                const progress = target > 0 ? count / target : 0;
+                const offset = progressCircumference * (1 - progress);
+                progressCircle.style.strokeDashoffset = offset;
+
+                if (isStarted && count >= target) {
+                    counterCircle.classList.add('completed');
+                    countText.textContent = 'पूर्ण';
+                    triggerVibration(true);
+                } else {
+                    counterCircle.classList.remove('completed');
+                }
+
+                if(isStarted) {
+                    counterCircle.classList.remove('disabled');
+                    startBtn.disabled = true;
+                    targetSelect.disabled = true;
+                    customTargetInput.disabled = true;
+                } else {
+                    counterCircle.classList.add('disabled');
+                    startBtn.disabled = false;
+                    targetSelect.disabled = false;
+                    customTargetInput.disabled = false;
+                }
+            };
+            
+            const handleCount = () => {
+                if (!isStarted || count >= target) return;
+                
+                count++;
+                updateUI();
+                saveState();
+                playSound();
+                triggerVibration();
+            };
+
+            const startCounting = () => {
+                target = getTargetValue();
+                if (target < 1) return;
+                isStarted = true;
+                updateUI();
+                saveState();
+            };
+
+            const resetState = () => {
+                count = 0;
+                isStarted = false;
+                target = getTargetValue();
+                localStorage.removeItem('japCounterState');
+                updateUI();
+            };
+
+            // --- Persistence ---
+
+            const saveState = () => {
+                const state = { count, target, isStarted };
+                localStorage.setItem('japCounterState', JSON.stringify(state));
+            };
+
+            const loadState = () => {
+                const savedState = localStorage.getItem('japCounterState');
+                if (savedState) {
+                    const { count: savedCount, target: savedTarget, isStarted: savedIsStarted } = JSON.parse(savedState);
+                    
+                    // If last session was completed, reset for a new session
+                    if (savedCount >= savedTarget) {
+                        resetState();
+                        return;
+                    }
+
+                    count = savedCount;
+                    target = savedTarget;
+                    isStarted = savedIsStarted;
+                    
+                    // Set dropdown to match saved target
+                    const optionExists = Array.from(targetSelect.options).some(opt => opt.value == savedTarget);
+                    if (optionExists) {
+                        targetSelect.value = savedTarget;
+                        customTargetWrap.style.display = 'none';
+                    } else {
+                        targetSelect.value = 'custom';
+                        customTargetInput.value = savedTarget;
+                        customTargetWrap.style.display = 'block';
+                    }
+                }
+                updateUI();
+            };
+
+            // --- Sound and Haptics ---
+
+            const playSound = () => {
+                if (isMuted) return;
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error("Web Audio API is not supported in this browser");
+                        return;
+                    }
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+                
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            };
+
+            const triggerVibration = (isComplete = false) => {
+                if ('vibrate' in navigator && !isMuted) {
+                    navigator.vibrate(isComplete ? [100, 50, 100] : 15);
+                }
+            };
+            
+            const toggleMute = () => {
+                isMuted = !isMuted;
+                muteToggle.textContent = isMuted ? '🔇' : '🔊';
+                localStorage.setItem('isMuted', isMuted);
+            };
+
+            // --- Event Listeners and Initial Setup ---
+            
+            const setupProgressRing = () => {
+                const ring = document.getElementById('progressRing');
+                const size = ring.clientWidth;
+                const strokeWidth = parseFloat(getComputedStyle(ring.querySelector('circle')).strokeWidth);
+                progressRadius = (size / 2) - (strokeWidth / 2);
+
+                const circles = ring.querySelectorAll('circle');
+                circles.forEach(c => {
+                    c.setAttribute('r', progressRadius);
+                });
+
+                progressCircumference = 2 * Math.PI * progressRadius;
+                progressCircle.style.strokeDasharray = `${progressCircumference} ${progressCircumference}`;
+                progressCircle.style.strokeDashoffset = progressCircumference;
+            };
+
+            counterCircle.addEventListener('click', handleCount);
+            startBtn.addEventListener('click', startCounting);
+            resetBtn.addEventListener('click', resetState);
+            muteToggle.addEventListener('click', toggleMute);
+
+            targetSelect.addEventListener('change', () => {
+                if (targetSelect.value === 'custom') {
+                    customTargetWrap.style.display = 'block';
+                    customTargetInput.focus();
+                } else {
+                    customTargetWrap.style.display = 'none';
+                }
+            });
+
+            // Keyboard support
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === ' ' || e.key === 'Enter') && document.activeElement === counterCircle) {
+                    e.preventDefault(); // Prevent page scroll on space
+                    handleCount();
+                }
+            });
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                setupProgressRing();
+                updateUI();
+            });
+
+            // Initial setup call
+            setupProgressRing();
+            muteToggle.textContent = isMuted ? '🔇' : '🔊';
+            loadState();
+        });
+    </script>
+</body>
+</html>
